@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+
+    <title>Collapsible Tree Example</title>
+
+    <style>
+
+	.node circle {
+	  fill: #fff;
+	  stroke: steelblue;
+	  stroke-width: 3px;
+	}
+
+	.node text { font: 16px sans-serif; }
+
+	.link {
+	  fill: none;
+	  stroke: #ccc;
+	  stroke-width: 2px;
+	}
+	
+    </style>
+
+  </head>
+    <p><input type="text" id="code" autocapitalize="off" spellcheck="false" value="2+2@" onchange="" onkeydown="">
+    <button onclick="go()">Построить</button></p>
+  <body>
+
+<!-- load the d3.js library -->	
+<script src="http://d3js.org/d3.v3.min.js"></script>
+	
+<script>
+    
+    function go () {
+
+    var treeData = [];
+    var left={};
+    var right={};
+    var save={};
+    var int_result_send={value:0};
+    var is_bool_send={value:false};
+    var bool_result_send={value:false};
+    var oForm = document.getElementById('code');
+    var test_string=oForm.value;
+    AcceptString();
+
+
+    var success=false;
+
+
+function AcceptString() {
+        
+        var oForm = document.getElementById('code');
+        
+        test_string=oForm.value+"@";
+        var position_send={value:0};
+        ParseS(test_string,position_send,int_result_send,is_bool_send,bool_result_send) &&                       test_string.charAt(position_send.value) == '@';
+        d3.select("svg")
+            .remove();
+
+    }
+    
+function ParseS(test_string,position,int_result,is_bool,bool_result){
+    return ParseOr(test_string,position,int_result,is_bool,bool_result) &&           test_string.charAt(position.value) == '@';
+    }   
+    
+function ParseOr(test_string,position,int_result,is_bool,bool_result){
+    var parentForSend={};
+    var success=ParseAnd(test_string,position,int_result,is_bool,bool_result);
+    while(success && test_string.charAt(position.value) == '|'){
+        save=left;
+        left={};
+        position.value+=1;
+        is_bool.value=true;
+        var previous_bool_result={value:false};
+        var previous_int_result={value:0};
+        if(treeData.length > 0){
+            if((treeData[0].name!=null && treeData[0].name!="|") || treeData[0].children.length>0){
+                parentForSend=treeData[0];
+                treeData.pop();
+            }
+        }
+        success = success && ParseAnd(test_string,position,
+                                    previous_int_result,
+                                    is_bool,previous_bool_result);
+        bool_result=bool_result || previous_bool_result;
+   var sign="|";
+      if(parentForSend.name!=null){
+            if(treeData.length==0){
+                treeData[0]=left;
+            }
+            treeData[0].parent=sign;
+            parentForSend.parent=sign;
+            treeData[0]=({"name":sign,"parent":"null","children":[treeData[0],parentForSend]});
+            left={};
+            right={};
+        }else{
+            if(left.name==null){
+                left=save;
+                save={};
+            }
+            if(right.name==null){
+                if(treeData.length!=0){
+                    right=treeData[0];
+                    treeData.pop();
+                }else{
+                    right=save;
+                    save={};
+                }
+            }
+            left.parent=sign;
+            right.parent=sign;
+            if(treeData.length==0){
+                treeData[0]=({"name":sign,"parent":"null","children":[right,left]});
+            }else{
+                treeData[1]=({"name":sign,"parent":"null","children":[right,left]});
+                if(right.name ==null){
+                    left.parent=sign;
+                    treeData[0]=({"name":sign,"parent":"null","children":[treeData[0],left]});
+                }else{
+                    treeData[0].parent=sign;
+                    treeData[1].parent=sign;
+                    treeData[0]=({"name":sign,"parent":"null","children":[treeData[0],treeData[1]]});
+                    treeData.pop();
+                }
+            }
+            left={};
+            right={};   
+        }
+    }
+    return success;
+}
+
+    function ParseAnd(test_string,position,int_result,is_bool,bool_result){
+    var success=ParseEqual(test_string,position,int_result,is_bool,bool_result);
+    var parentForSend={};
+    while(success && test_string.charAt(position.value) == '&'){
+        save=left;
+        left={};
+        position.value+=1;
+        is_bool.value=true;
+        var previous_bool_result={value:false};
+        var previous_int_result={value:0};
+        if(treeData.length > 0){
+            if((treeData[0].name!=null && treeData[0].name!="&") || treeData[0].children.length>0){
+                parentForSend=treeData[0];
+                treeData.pop();
+            }
+        }
+        success = success && ParseEqual(test_string,position,
+                                    previous_int_result,
+                                    is_bool,previous_bool_result);
+        bool_result=bool_result && previous_bool_result;
+        var sign="&";
+      if(parentForSend.name!=null){
+            if(treeData.length==0){
+                treeData[0]=left;
+            }
+            treeData[0].parent=sign;
+            parentForSend.parent=sign;
+            treeData[0]=({"name":sign,"parent":"null","children":[treeData[0],parentForSend]});
+            left={};
+            right={};
+        }else{
+            if(left.name==null){
+                left=save;
+                save={};
+            }
+            if(right.name==null){
+                if(treeData.length!=0){
+                    right=treeData[0];
+                    treeData.pop();
+                }else{
+                    right=save;
+                    save={};
+                }
+            }
+            left.parent=sign;
+            right.parent=sign;
+            if(treeData.length==0){
+                treeData[0]=({"name":sign,"parent":"null","children":[right,left]});
+            }else{
+                treeData[1]=({"name":sign,"parent":"null","children":[right,left]});
+                if(right.name ==null){
+                    left.parent=sign;
+                    treeData[0]=({"name":sign,"parent":"null","children":[treeData[0],left]});
+                }else{
+                    treeData[0].parent=sign;
+                    treeData[1].parent=sign;
+                    treeData[0]=({"name":sign,"parent":"null","children":[treeData[0],treeData[1]]});
+                    treeData.pop();
+                }
+            }
+            left={};
+            right={};   
+        }
+    }
+    return success;
+}
+    function ParseEqual(test_string,position,int_result,is_bool,bool_result){
+    var success=ParsePlus(test_string,position,int_result,is_bool,bool_result);
+    var parentForSend={};
+    while(success && (test_string.charAt(position.value) == '>'
+                     || test_string.charAt(position.value) == '<'
+                     || test_string.charAt(position.value) == '=')){
+        save=left;
+        left={};
+        var sign =test_string.charAt(position.value);
+        position.value+=1;
+        is_bool.value=true;
+        var previous_bool_result={value:false};
+        var previous_int_result={value:0};
+        if(treeData.length > 0){
+            if(treeData[0].name=="+" || treeData[0].name=="*"||treeData[0].children.length>0){
+                parentForSend=treeData[0];
+                treeData.pop();
+            }
+        }
+        success = success && ParsePlus(test_string,position,
+                                    previous_int_result,
+                                    is_bool,bool_result);
+        bool_result.value=bool_result.value && previous_bool_result.value;
+      if(parentForSend.name!=null){
+            if(treeData.length==0){
+                treeData[0]=left;
+            }
+            treeData[0].parent=sign;
+            parentForSend.parent=sign;
+            treeData[0]=({"name":sign,"parent":"null","children":[treeData[0],parentForSend]});
+            left={};
+            right={};
+        }else{
+            if(left.name==null){
+                left=save;
+                save={};
+            }
+            if(right.name==null){
+                if(treeData.length!=0){
+                    right=treeData[0];
+                    treeData.pop();
+                }else{
+                    right=save;
+                    save={};
+                }
+            }
+            left.parent=sign;
+            right.parent=sign;
+            if(treeData.length==0){
+                treeData[0]=({"name":sign,"parent":"null","children":[right,left]});
+            }else{
+                treeData[1]=({"name":sign,"parent":"null","children":[right,left]});
+                if(right.name ==null){
+                    left.parent=sign;
+                    treeData[0]=({"name":sign,"parent":"null","children":[treeData[0],left]});
+                }else{
+                    treeData[0].parent=sign;
+                    treeData[1].parent=sign;
+                    treeData[0]=({"name":sign,"parent":"null","children":[treeData[0],treeData[1]]});
+                    treeData.pop();
+                }
+            }
+            left={};
+            right={};   
+        }
+        
+        if (sign == '<') {
+            bool_result.value = int_result.value < previous_int_result.value;
+        } 
+        if (sign == '>') {
+            bool_result.value = int_result.value > previous_int_result.value;
+        }
+        if (sign == '=') {
+            bool_result.value = int_result.value == previous_int_result.value;
+        }
+    }
+    return success;
+}
+ function ParsePlus(test_string,position,int_result,is_bool,bool_result){
+    var success=ParseMult(test_string,position,int_result,is_bool,bool_result);
+      var parentForSend={};
+    while(success && (test_string.charAt(position.value) == '+'
+                     || test_string.charAt(position.value) == '-')){
+        save=left;
+        left={};
+        var sign=test_string.charAt(position.value);
+        position.value+=1;
+        var previous_int_result={value:0};
+        if(treeData.length > 0){
+            if(treeData[0].name=="*" || treeData[0].children.length>0){
+                parentForSend=treeData[0];
+                treeData.pop();
+            }
+        }
+
+        success = success && ParseMult(test_string,position,
+                                    previous_int_result,
+                                    is_bool,bool_result);
+
+        if(parentForSend.name!=null){
+            if(treeData.length==0){
+                treeData[0]=left;
+            }
+            treeData[0].parent=sign;
+            parentForSend.parent=sign;
+            treeData[0]=({"name":sign,"parent":"null","children":[treeData[0],parentForSend]});
+            left={};
+            right={};
+        }else{
+            if(left.name==null){
+                left=save;
+                save={};
+            }
+            if(right.name==null){
+                if(treeData.length!=0){
+                    right=treeData[0];
+                    treeData.pop();
+                }else{
+                    right=save;
+                    save={};
+                }
+            }
+            left.parent=sign;
+            right.parent=sign;
+            if(treeData.length==0){
+                treeData[0]=({"name":sign,"parent":"null","children":[right,left]});
+            }else{
+                treeData[1]=({"name":sign,"parent":"null","children":[right,left]});
+                if(right.name ==null){
+                    left.parent=sign;
+                    treeData[0]=({"name":sign,"parent":"null","children":[treeData[0],left]});
+                }else{
+                    treeData[0].parent=sign;
+                    treeData[1].parent=sign;
+                    treeData[0]=({"name":sign,"parent":"null","children":[treeData[0],treeData[1]]});
+                    treeData.pop();
+                }
+            }
+            
+            left={};
+            right={};   
+        }
+        
+        
+        if (sign == '+') {
+            int_result.value+= previous_int_result.value;
+        } 
+        if (sign == '-') {
+            int_result.value-= previous_int_result.value;
+        }
+        
+
+    }
+    return success;
+ }
+    
+function ParseMult(test_string,position,int_result,is_bool,bool_result){
+    var success=ParseBrackets(test_string,position,int_result,is_bool,bool_result);
+    while(success && test_string.charAt(position.value) == '*'){
+        var sign =test_string.charAt(position.value);
+        position.value+=1;
+        var previous_int_result={value:0};
+        success = success && ParseBrackets(test_string,position,
+                                    previous_int_result,
+                                    is_bool,bool_result);
+        bool_result.value=bool_result.value && previous_bool_result.value;
+        if (sign == '*') {
+            left.parent=sign;
+            right.parent=sign;
+            if(treeData.length==0 ){
+                treeData[0]=({"name":sign,"parent":"null","children":[right,left]});
+            }else{
+                treeData[1]=({"name":sign,"parent":"null","children":[right,left]});
+                if(right.name ==null){
+                    left.parent=sign;
+                    treeData[0]=({"name":sign,"parent":"null","children":[treeData[0],left]});
+                }else{
+                    treeData[0].parent=sign;
+                    treeData[1].parent=sign;
+                    treeData[0]=({"name":sign,"parent":"null","children":[treeData[0],treeData[1]]});
+                    treeData.pop();
+                }
+
+            }
+            
+            left={};
+            right={};
+            int_result*= previous_int_result;
+        } 
+
+    }
+    return success;
+}
+
+function ParseBrackets(test_string,
+              position,
+              int_result,
+              is_bool,
+              bool_result) {
+    if (!isNaN(test_string.charAt(position.value)) || test_string.charAt(position.value)  == '-') {
+          var sign = 1;
+          if (test_string.charAt(position.value) == '-' &&
+              !isNaN(test_string.charAt(position+1))) {
+                  sign = -1;
+                  position.value+=1;
+          }
+          while (!isNaN(test_string.charAt(position.value)) ) {
+              int_result.value = int_result.value*10 + test_string.charAt(position.value).charCodeAt(0) - '0'.charCodeAt(0);
+              
+               position.value+=1;
+          }
+            int_result.value *= sign;
+            if(left.name==null){
+                left={"name":int_result.value,"parent":"null","children":[]};
+
+            }else{
+                right={"name":int_result.value,"parent":"null","children":[]};   
+            }
+          return true;
+      } else {
+          var is_reversed = false;
+          var success = false;
+          if (test_string.charAt(position.value) == '!') {
+              is_bool.value = true;
+              is_reversed = true;
+              position.value+=1;
+          }
+
+          if (test_string.charAt(position.value) == '(') {
+              position.value+=1;
+              var previous_bool_result = {value:false};
+              var temp_is_bool = {value:false};
+              success = ParseOr(test_string, position,
+                               int_result, temp_is_bool, previous_bool_result);
+              if (success && test_string.charAt(position.value) == ')') {
+                  bool_result.value = previous_bool_result.value;
+                  if (is_reversed) {
+                      if (temp_is_bool.value) {
+                          bool_result.value = !bool_result.value;
+                      } else {
+                          return false;
+                      }
+                  } else {
+                      is_bool.value = temp_is_bool.value;
+                  }
+                  position.value+=1;
+              } else {
+                  return false;
+              }
+          } else {
+              return false;
+          }
+          return success;
+      }
+  }    
+
+// ************** Generate the tree diagram	 *****************
+var margin = {top: 40, right: 120, bottom: 20, left: 120},
+	width = 960 - margin.right - margin.left,
+	height = 500 - margin.top - margin.bottom;
+	
+var i = 0;
+
+var tree = d3.layout.tree()
+	.size([height, width]);
+
+var diagonal = d3.svg.diagonal()
+	.projection(function(d) { return [d.x, d.y]; });
+
+var svg = d3.select("body").append("svg")
+	.attr("width", width + margin.right + margin.left)
+	.attr("height", height + margin.top + margin.bottom)
+  .append("g")
+	.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+//********//  
+    root=treeData[0];
+    update(root);   
+
+function update(source) {
+
+  // Compute the new tree layout.
+  var nodes = tree.nodes(root).reverse(),
+	  links = tree.links(nodes);
+
+  // Normalize for fixed-depth.
+  nodes.forEach(function(d) { d.y = d.depth * 100; });
+
+  // Declare the nodes…
+  var node = svg.selectAll("g.node")
+	  .data(nodes, function(d) { return d.id || (d.id = ++i); });
+
+  // Enter the nodes.
+  var nodeEnter = node.enter().append("g")
+	  .attr("class", "node")
+	  .attr("transform", function(d) { 
+		  return "translate(" + d.x + "," + d.y + ")"; });
+
+  nodeEnter.append("circle")
+	  .attr("r", 10)
+	  .style("fill", "#fff");
+
+  nodeEnter.append("text")
+	  .attr("y", function(d) { 
+		  return d.children || d._children ? -18 : 18; })
+	  .attr("dy", ".35em")
+	  .attr("text-anchor", "middle")
+	  .text(function(d) { return d.name; })
+	  .style("fill-opacity", 1);
+
+  // Declare the links…
+  var link = svg.selectAll("path.link")
+	  .data(links, function(d) { return d.target.id; });
+
+  // Enter the links.
+  link.enter().insert("path", "g")
+	  .attr("class", "link")
+	  .attr("d", diagonal);
+
+}
+}
+    
+
+
+
+</script>
+	
+  </body>
+</html>
