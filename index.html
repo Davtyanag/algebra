@@ -24,10 +24,10 @@
     </style>
 
   </head>
-    <p><input type="text" id="code" autocapitalize="off" spellcheck="false" value="2+2@" onchange="" onkeydown="">
+    <p><input type="text" id="code" autocapitalize="off" spellcheck="false" value="5+3*7" onchange="" onkeydown="">
     <button onclick="go()">Построить</button></p>
   <body>
-
+<b>Поддерживаются выражения вида Pascal,то есть переменные a-z A-z, числа 0..9 и операции: * /  &  |  = >  < ( ) </b>
 <!-- load the d3.js library -->	
 <script src="http://d3js.org/d3.v3.min.js"></script>
 	
@@ -93,7 +93,7 @@ function ParseOr(test_string,position,int_result,is_bool,bool_result){
             }
             treeData[0].parent=sign;
             parentForSend.parent=sign;
-            treeData[0]=({"name":sign,"parent":"null","children":[treeData[0],parentForSend]});
+            treeData[0]=({"name":sign,"parent":"null","children":[parentForSend,treeData[0]]});
             left={};
             right={};
         }else{
@@ -160,7 +160,7 @@ function ParseOr(test_string,position,int_result,is_bool,bool_result){
             }
             treeData[0].parent=sign;
             parentForSend.parent=sign;
-            treeData[0]=({"name":sign,"parent":"null","children":[treeData[0],parentForSend]});
+            treeData[0]=({"name":sign,"parent":"null","children":[parentForSend,treeData[0]]});
             left={};
             right={};
         }else{
@@ -228,7 +228,7 @@ function ParseOr(test_string,position,int_result,is_bool,bool_result){
             }
             treeData[0].parent=sign;
             parentForSend.parent=sign;
-            treeData[0]=({"name":sign,"parent":"null","children":[treeData[0],parentForSend]});
+            treeData[0]=({"name":sign,"parent":"null","children":[parentForSend,treeData[0]]});
             left={};
             right={};
         }else{
@@ -282,13 +282,17 @@ function ParseOr(test_string,position,int_result,is_bool,bool_result){
       var parentForSend={};
     while(success && (test_string.charAt(position.value) == '+'
                      || test_string.charAt(position.value) == '-')){
-        save=left;
-        left={};
+        if(save.name==null){
+            save=left;
+            left={};
+        }
+        
+        
         var sign=test_string.charAt(position.value);
         position.value+=1;
         var previous_int_result={value:0};
         if(treeData.length > 0){
-            if(treeData[0].name=="*" || treeData[0].children.length>0){
+            if(treeData[0].name=="*" ||treeData[0].name=="/" || treeData[0].children.length>0){
                 parentForSend=treeData[0];
                 treeData.pop();
             }
@@ -304,7 +308,7 @@ function ParseOr(test_string,position,int_result,is_bool,bool_result){
             }
             treeData[0].parent=sign;
             parentForSend.parent=sign;
-            treeData[0]=({"name":sign,"parent":"null","children":[treeData[0],parentForSend]});
+            treeData[0]=({"name":sign,"parent":"null","children":[parentForSend,treeData[0]]});
             left={};
             right={};
         }else{
@@ -357,19 +361,51 @@ function ParseOr(test_string,position,int_result,is_bool,bool_result){
     
 function ParseMult(test_string,position,int_result,is_bool,bool_result){
     var success=ParseBrackets(test_string,position,int_result,is_bool,bool_result);
-    while(success && test_string.charAt(position.value) == '*'){
-        var sign =test_string.charAt(position.value);
+    var parentForSend={};
+    while(success && (test_string.charAt(position.value) == '*'||
+                    test_string.charAt(position.value) == '/')){
+               // save=left;
+        //left={};
+        var sign=test_string.charAt(position.value);
         position.value+=1;
         var previous_int_result={value:0};
+        if(treeData.length > 0){
+            if( treeData[0].children.length>0){
+                parentForSend=treeData[0];
+                treeData.pop();
+            }
+        }
         success = success && ParseBrackets(test_string,position,
                                     previous_int_result,
                                     is_bool,bool_result);
         bool_result.value=bool_result.value && previous_bool_result.value;
-        if (sign == '*') {
+        if(parentForSend.name!=null){
+            if(treeData.length==0){
+                treeData[0]=left;
+            }
+            treeData[0].parent=sign;
+            parentForSend.parent=sign;
+            treeData[0]=({"name":sign,"parent":"null","children":[parentForSend,treeData[0]]});
+            left={};
+            right={};
+        }else{
+            if(left.name==null){
+                left=save;
+                save={};
+            }
+            if(right.name==null){
+                if(treeData.length!=0){
+                    right=treeData[0];
+                    treeData.pop();
+                }else{
+                    right=save;
+                    save={};
+                }
+            }
             left.parent=sign;
             right.parent=sign;
-            if(treeData.length==0 ){
-                treeData[0]=({"name":sign,"parent":"null","children":[right,left]});
+            if(treeData.length==0){
+                treeData[0]=({"name":sign,"parent":"null","children":[left,right]});
             }else{
                 treeData[1]=({"name":sign,"parent":"null","children":[right,left]});
                 if(right.name ==null){
@@ -381,13 +417,17 @@ function ParseMult(test_string,position,int_result,is_bool,bool_result){
                     treeData[0]=({"name":sign,"parent":"null","children":[treeData[0],treeData[1]]});
                     treeData.pop();
                 }
-
             }
             
             left={};
-            right={};
-            int_result*= previous_int_result;
+            right={};   
+        }
+        if (sign == '*') {
+            int_result.value*= previous_int_result.value;
         } 
+        if (sign == '/') {
+            int_result.value/= previous_int_result.value;
+        }
 
     }
     return success;
@@ -425,6 +465,23 @@ function ParseBrackets(test_string,
               is_bool.value = true;
               is_reversed = true;
               position.value+=1;
+          }
+          var letters = /^[A-Za-z]+$/;  
+
+          if(test_string.charAt(position.value).match(letters)){
+            if(left.name==null){
+                
+                left={"name":test_string.charAt(position.value),"parent":"null","children":[]};
+                position.value+=1;
+                success=true;
+                return success;
+
+            }else{
+                right={"name":test_string.charAt(position.value),"parent":"null","children":[]};
+                position.value+=1;
+                success=true;
+                return success;
+            }
           }
 
           if (test_string.charAt(position.value) == '(') {
