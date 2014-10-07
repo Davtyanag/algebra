@@ -25,14 +25,24 @@
 
   </head>
     <p><input type="text" id="code" autocapitalize="off" spellcheck="false" value="5+3*7" onchange="" onkeydown="">
-    <button onclick="go()">Построить</button></p>
+    <button onclick="go()">Построить</button>
+    <button onclick="save()">Сохранить</button></p>
+    <button onclick="show()">Показать историю</button></p>
+    
   <body>
 <b>Поддерживаются выражения вида Pascal,то есть переменные a-z A-z, числа 0..9 и операции: * /  &  |  = >  < ( ) </b>
 <!-- load the d3.js library -->	
 <script src="http://d3js.org/d3.v3.min.js"></script>
-	
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
 <script>
-    
+    function save () {
+        var oForm = document.getElementById('code');
+        $.post( "filewrite.php", { str: oForm.value } ); 
+    }
+    function show () {
+        link='fileread.php';
+        window.location.href=link;   
+    }
     function go () {
 
     var treeData = [];
@@ -44,10 +54,13 @@
     var bool_result_send={value:false};
     var oForm = document.getElementById('code');
     var test_string=oForm.value;
-    AcceptString();
-
-
     var success=false;
+
+
+    
+    if(AcceptString()==false){
+        treeData=[];
+    }
 
 
 function AcceptString() {
@@ -56,9 +69,10 @@ function AcceptString() {
         
         test_string=oForm.value+"@";
         var position_send={value:0};
-        ParseS(test_string,position_send,int_result_send,is_bool_send,bool_result_send) &&                       test_string.charAt(position_send.value) == '@';
         d3.select("svg")
             .remove();
+        return ParseS(test_string,position_send,int_result_send,is_bool_send,bool_result_send) &&                       test_string.charAt(position_send.value) == '@';
+
 
     }
     
