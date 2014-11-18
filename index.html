@@ -28,6 +28,7 @@
     <button onclick="go()">Построить</button>
     <button onclick="save()">Сохранить</button></p>
     <button onclick="show()">Показать историю</button></p>
+    <button onclick="downloadHistory()">Скачать Tex файл</button></p>
     
   <body>
 <b>Поддерживаются выражения вида Pascal,то есть переменные a-z A-z, числа 0..9 и операции: * /  &  |  = >  < ( ) </b>
@@ -41,6 +42,10 @@
     }
     function show () {
         link='fileread.php';
+        window.location.href=link;   
+    }
+   function downloadHistory () {
+        link='download.php';
         window.location.href=link;   
     }
     function go () {
